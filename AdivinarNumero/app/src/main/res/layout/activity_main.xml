@@ -8,8 +8,8 @@
     <!-- LinearLayout vertical centrado mediante ConstraintLayout -->
     <LinearLayout
         android:id="@+id/linearLayoutVertical"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_height="730dp"
         android:orientation="vertical"
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
