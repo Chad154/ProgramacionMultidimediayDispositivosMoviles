@@ -8,6 +8,16 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/buttonCambiarTamanioMenor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/buttonAbajo"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="27dp"
+        android:layout_marginEnd="68dp"
+        android:text="Mas Pequeño" />
+
     <View
         android:id="@+id/cuadrado"
         android:layout_width="100dp"
@@ -58,9 +68,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/buttonAbajo"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="30dp"
-        android:text="Cambiar Tamaño" />
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="77dp"
+        android:layout_marginTop="29dp"
+        android:text="Mas Grande" />
 
     <Button
         android:id="@+id/buttonCambiarColor"
