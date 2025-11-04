@@ -1,6 +1,7 @@
 package com.example.cuadrado
 
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable // añadido: para manejar el borde
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -8,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import model.Cuadrado
+import model.CuadradoBordes
 import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
@@ -27,6 +29,7 @@ class MainActivity : AppCompatActivity() {
         val botonCambiarTamanio: Button = findViewById(R.id.buttonCambiarTamanio)
         val botonCambiarColor: Button = findViewById(R.id.buttonCambiarColor)
         val botonCambiarTamanioMenor: Button = findViewById(R.id.buttonCambiarTamanioMenor)
+        val botonCambiarBorde: Button = findViewById(R.id.buttonCambiarBorde) // añadido: botón para cambiar borde
 
         // Esperar a que la vista esté lista (ya tiene ancho y alto)
         cuadradoView.post {
@@ -36,14 +39,18 @@ class MainActivity : AppCompatActivity() {
             val inicialY = cuadradoView.y.toInt()
 
             // Asociar la vista con el objeto cuadrado
-            val cuadrado = Cuadrado(
+            val cuadrado = CuadradoBordes(
                 ContextCompat.getColor(this, R.color.red),
                 inicialAncho,
                 inicialAlto
             ).apply {
                 x = inicialX
                 y = inicialY
+                var colorBorde = ContextCompat.getColor(this@MainActivity, R.color.black)
             }
+
+            // Variable añadida para manejar el color del borde
+            // añadido
 
             // Poner los botones a la escucha
             botonArriba.setOnClickListener {
@@ -82,13 +89,30 @@ class MainActivity : AppCompatActivity() {
                 cuadrado.color = generarColorAleatorio()
                 actualizarVista(cuadrado, cuadradoView)
             }
+
+            // añadido: botón para cambiar color del borde
+            botonCambiarBorde.setOnClickListener {
+                cuadrado.CambiarColorBorde(generarColorAleatorio())
+
+                //Llamamos a la funcion Nested
+
+                //cuadrado.CambiarColorBorde(CuadradoBordes.ManejoColor.ObtenerCincoColorRandomBorde())
+                actualizarVista(cuadrado, cuadradoView)
+            }
         }
     }
 
-    private fun actualizarVista(cuadrado: Cuadrado, cuadradoView: View) {
+    // modificado: se añade parámetro colorBorde
+    private fun actualizarVista(cuadrado: CuadradoBordes, cuadradoView: View) {
         cuadradoView.layoutParams.width = cuadrado.ancho
         cuadradoView.layoutParams.height = cuadrado.alto
-        cuadradoView.setBackgroundColor(cuadrado.color)
+
+        // añadido: crear borde con GradientDrawable
+        val drawable = GradientDrawable()
+        drawable.setColor(cuadrado.color)
+        drawable.setStroke(10, generarColorAleatorio())
+        cuadradoView.background = drawable
+
         cuadradoView.x = cuadrado.x.toFloat()
         cuadradoView.y = cuadrado.y.toFloat()
         cuadradoView.requestLayout()
