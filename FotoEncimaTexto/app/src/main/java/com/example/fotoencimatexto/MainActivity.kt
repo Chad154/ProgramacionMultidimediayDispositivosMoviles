@@ -1,6 +1,5 @@
 package com.example.fotoencimatexto
 
-
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,22 +19,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fotoencimatexto.ui.theme.FotoEncimaTextoTheme
+//Para que funcione los offset con RememberSaveable
+val OffsetSaver = Saver<Offset,Pair<Float,Float>>(
+    save = { Pair(it.x,it.y)}, //Guardar como pares de float
+    restore = {(x,y) -> Offset(x,y)} //Restaurar a Offset
+    )
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,31 +55,22 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-//@Preview (showBackground = true, widthDp = 100, heightDp = 100)
-@Composable
-fun texto() {
-    Box(
-        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "Jamones Imad", color = Color.Black, fontSize = 25.sp
-        )
-    }
-}
-
-@Preview(showBackground = true)
 @Composable
 fun foto() {
-    //Declaramos una variable observable para almacenar el color de fondo
-    //val colorFondo = remember {mutableStateOf(Color.White)}
-    var colorFondo by remember { mutableStateOf(Color.Yellow) }
-    var posicionTexto by remember { mutableStateOf(Offset(0f, 0f)) }
-    //Calculamos el alto y ancho de la pantalla
-    var anchoPantalla by remember { mutableStateOf(0f) }
-    var altoPantalla by remember { mutableStateOf(0f) }
-    //Calculamos el alto y el ancho del texto
-    var anchoTexto by remember { mutableStateOf(0f) }
-    var altoTexto by remember { mutableStateOf(0f) }
+
+    // Color → NO es saveable
+   // var colorFondo by remember { mutableStateOf(Color.Yellow) }
+    var colorFondoInt by rememberSaveable { mutableStateOf(Color.Yellow.toArgb()) }
+    var colorFondo = Color(colorFondoInt)
+    // Offset → NO es saveable
+    var posicionTexto by rememberSaveable (stateSaver = OffsetSaver){ mutableStateOf(Offset.Zero) }
+
+    // Estos sí son saveables
+    var anchoPantalla by rememberSaveable { mutableStateOf(0f) }
+    var altoPantalla by rememberSaveable { mutableStateOf(0f) }
+    var anchoTexto by rememberSaveable { mutableStateOf(0f) }
+    var altoTexto by rememberSaveable { mutableStateOf(0f) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -81,25 +79,12 @@ fun foto() {
             .onGloballyPositioned { coordinates ->
                 altoPantalla = coordinates.size.height.toFloat()
                 anchoPantalla = coordinates.size.width.toFloat()
-                //if (posicionTexto.x==0 && posicionTexto.y==0)
             }
-
     ) {
-        /*Image(
-            painter = painterResource(id = R.drawable.jamon),
-            contentDescription = "Imagen del jamon de Imad",
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxSize()
+        // Imagen interactiva
+        imagenInteractiva()
 
-        )*/
-
-        imagenInteractiva(
-
-        )
-
-
-
+        // El texto arrastrable
         Text(
             text = "Jamones",
             color = Color.Yellow,
@@ -110,83 +95,89 @@ fun foto() {
                 .onGloballyPositioned { coordinates ->
                     altoTexto = coordinates.size.height.toFloat()
                     anchoTexto = coordinates.size.width.toFloat()
-                    if (posicionTexto == Offset(0f, 0f)) {
+
+                    // Primera vez: centrar
+                    if (posicionTexto == Offset.Zero) {
                         posicionTexto = Offset(
-                            (anchoPantalla - anchoTexto) / 2, (altoPantalla - altoTexto) / 2
+                            (anchoPantalla - anchoTexto) / 2,
+                            (altoPantalla - altoTexto) / 2
                         )
                     }
                 }
-                .offset { IntOffset(posicionTexto.x.toInt(), posicionTexto.y.toInt()) }
+                .offset {
+                    IntOffset(
+                        posicionTexto.x.toInt(),
+                        posicionTexto.y.toInt()
+                    )
+                }
                 .pointerInput(Unit) {
                     detectDragGestures { change, dragAmount ->
-                        change.consume() // Indica que manejas el gesto
+                        change.consume()
                         posicionTexto = Offset(
-                            posicionTexto.x + dragAmount.x, posicionTexto.y + dragAmount.y
+                            posicionTexto.x + dragAmount.x,
+                            posicionTexto.y + dragAmount.y
                         )
                     }
-
                 }
-
         )
 
+        // Botón cambiar fondo
         Button(
-            onClick = { colorFondo = colorAleatorio() },
+            onClick = { colorFondoInt = colorAleatorio().toArgb() },
             modifier = Modifier.align(Alignment.BottomEnd)
         ) {
             Text(text = "Cambiar Fondo")
-
         }
     }
 }
 
+// GENERA UN COLOR ALEATORIO
 fun colorAleatorio(): Color {
-    val rojo = kotlin.random.Random.nextFloat()
-    //val rojoNuevo = (0..255).random().toFloat()
-    val verde = kotlin.random.Random.nextFloat()
-    //val verdeNuevo = (0..255).random().toFloat()
-    val azul = kotlin.random.Random.nextFloat()
-    //val azulNuevo = (0..255).random().toFloat()
-    //return Color(rojoNuevo, verdeNuevo,azulNuevo)
-    return Color(rojo, verde, azul)
+    val r = kotlin.random.Random.nextFloat()
+    val g = kotlin.random.Random.nextFloat()
+    val b = kotlin.random.Random.nextFloat()
+    return Color(r, g, b)
 }
 
 @Composable
 fun imagenInteractiva() {
-    //Almacenar y observar la escala de la imagen
+
+    // Estos no pueden ser saveables
     var escala by remember { mutableStateOf(1f) }
-    //necesitamos la posicion de la imagen
     var posicion by remember { mutableStateOf(Offset.Zero) }
+    var rotacion by remember { mutableStateOf(0f) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) {
-                detectTransformGestures { _, desplazamiento, zoom, _ ->
-                    //aplicamos el desplazamiento a la posicion
+                detectTransformGestures { _, desplazamiento, zoom, rotacionAngulo ->
                     posicion += desplazamiento
-                    //aplicamos el zoom a la escala
                     escala *= zoom
+                    rotacion += rotacionAngulo
                 }
-
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        escala = 1f
+                        posicion = Offset.Zero
+                        rotacion = 0f
+                    }
+                )
             },
         contentAlignment = Alignment.Center
-    )
-    {
+    ) {
         Image(
             painter = painterResource(id = R.drawable.jamon),
             contentDescription = "Imagen del jamon de Imad",
-            modifier = Modifier
-                //graphicsLayer permite aplicar una escala y una posicion a la imagen
-                .graphicsLayer(
-                    translationX = posicion.x,
-                    translationY = posicion.y,
-                    //Escala
-                    scaleX = escala.coerceIn(0.5f,3f), //Limite del zoom por el eje X
-                    scaleY = escala.coerceIn(0.5f,3f) //Limite del zoom por eje Y
-                )
-
+            modifier = Modifier.graphicsLayer(
+                translationX = posicion.x,
+                translationY = posicion.y,
+                scaleX = escala.coerceIn(0.5f, 3f),
+                scaleY = escala.coerceIn(0.5f, 3f),
+                rotationZ = rotacion
+            )
         )
     }
 }
-
-
-
