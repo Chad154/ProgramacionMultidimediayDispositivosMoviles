@@ -31,7 +31,7 @@ fun PantallaInicio(navController: NavController) {
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = {}
+            onClick = {navController.navigate("galeria")}
         ) {
             Text("Ir a la foticos")
         }
